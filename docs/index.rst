@@ -1,5 +1,5 @@
 #######################################
-Welcome to YOURPACKAGE's documentation!
+Welcome to Swift_host_subtraction's documentation!
 #######################################
 
 
@@ -7,7 +7,7 @@ Welcome to YOURPACKAGE's documentation!
 Package documentation
 *********************
 
-Please consult these pages for more details on using YOURPACKAGE:
+Please consult these pages for more details on using Swift_host_subtraction:
 
 * :ref:`genindex`
 * :ref:`modindex`

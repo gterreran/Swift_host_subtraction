@@ -1,49 +1,30 @@
-# template
-This repository stands to house a skeleton of what all repos (especially those containing python code), can look like.
+# Swift Host Subtraction
+
+This is a python package to perform aperture photometry on a single source in data from the Ultraviolet Optical Telescope ([UVOT](https://swift.gsfc.nasa.gov/about_swift/uvot_desc.html); [Roming et al. 2005](https://ui.adsabs.harvard.edu/abs/2005SSRv..120...95R/abstract)) on board the [Neil Gehrels Swift Observatory](https://swift.gsfc.nasa.gov) ([Gehrels et al. 2004](https://ui.adsabs.harvard.edu/abs/2004ApJ...611.1005G/abstract)). In particular, this package is oriented towards transient studies, as it can calculate template-subtracted luminosities if a template image is provided. 
+
+This project is based greatly on [Peter J. Brown](https://pbrown801.github.io)'s work. He wrote the original code in IDL, and published it in his [PhD Thesis](https://etda.libraries.psu.edu/files/final_submissions/4865). The aperture photometry is done following the standard guidelines described in [Brown et al. (2009)](https://ui.adsabs.harvard.edu/abs/2009AJ....137.4517B/abstract). The image subtraction is perfermed following the prescriptions outlined in [Brown et al. (2014)](https://ui.adsabs.harvard.edu/abs/2014Ap%26SS.354...89B/abstract). See the full documentation (work in progress) for more details.
+
+If you are interested in supernova light curves, check out also the Swift's Optical/Ultraviolet Supernova Archive ([SOUSA](https://pbrown801.github.io/SOUSA/)).
 
 # badges
 [![codecov](https://codecov.io/gh/CIERA-Northwestern/template/branch/main/graph/badge.svg?token=jAAQvHfHat)](https://codecov.io/gh/CIERA-Northwestern/template)
-![Unit Test YOURPACKAGE](https://github.com/CIERA-Northwestern/template/workflows/Unit%20Test%20YOURPACKAGE/badge.svg)
+![Unit Test Swift_host_subtraction](https://github.com/CIERA-Northwestern/template/workflows/Unit%20Test%20Swift_host_subtraction/badge.svg)
 
 # Documentation URL
 [Documentation](https://ciera-northwestern.github.io/template/)
 
-# Using this template
+# HEAsoft software
+The package uses [HEAsoft](https://heasarc.gsfc.nasa.gov/docs/software/heasoft/) commands like `uvotmaghist` and `uvotimsum`, which need to be installed separetly. Refer to the [website](https://heasarc.gsfc.nasa.gov/docs/software/heasoft/download.html) for a standard installation. Be sure to select the Swift packages in the STEP 2 of the Download. This package has been tested within HEAsoft v6.26. The scripts should work with any version of the Swift calibrations files, but it is highly suggested to have the most updated versions in order to have reliable outputs. Follow [these](https://heasarc.gsfc.nasa.gov/docs/heasarc/caldb/install.html) instructions to download and install the CALDB. Refer to [this](https://heasarc.gsfc.nasa.gov/docs/heasarc/caldb/swift/) page to check that you currently have the most updated CALDB for UVOT.
 
-## First steps
+# Using this Code
 
-In the top right corner there should be a Green Use Template button. Click this and name your new repository
+Consult the full Documentation (work in progress) for more details about how to run the code, interpreting  
 
-After this, you will want to `git clone` the repository locally and then use `git grep` to find and replace files with the correct information. The command for doing this find and repalce is linked [here](https://blog.jasonmeridth.com/posts/use-git-grep-to-replace-strings-in-files-in-your-git-repository/).
+## Preliminary steps
 
-An example of the commands would be (On MAC)
+In order to use the package, the Swift 
 
-```
-git grep -l 'YOURPACKAGE' | xargs sed -i '' -e 's/YOURPACKAGE/mypackage/g'
-git grep -l 'YOUR NAME' | xargs sed -i '' -e 's/YOUR NAME/myname/g'
-git grep -l 'YOUREMAIL' | xargs sed -i '' -e 's/YOUREMAIL/myemail/g'
-```
 
-After you have done this, you must also change the name of the package in the repo using `git mv`
+# Contributions
 
-```
-git mv YOURPACKAGE/ mypackage
-```
 
-Now we can commit and update the template so we are ready for developing your own package.
-
-```
-git commit -m "Updating template"
-git push
-```
-
-## Activating the Continous Integration
-In order for the code coverage and continuous integration to work you must allow 3rd party access codecov to access your Github repo. To do this, you must sign into the services (you can justuse your GitHub account to do so).
-
-[Code coverage](https://codecov.io/)
-
-# Examples of some repositories with these files
-
-https://github.com/Gravity-Spy/GravitySpy
-
-https://github.com/COSMIC-PopSynth/COSMIC

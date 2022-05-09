@@ -22,7 +22,7 @@ requirements:
 
 test:
   imports:
-    - YOURPACKAGE
+    - Swift_host_subtraction
 
 about:
   home: {{ data['url'] }}

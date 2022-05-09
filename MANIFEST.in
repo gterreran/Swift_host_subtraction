@@ -1,3 +1,6 @@
 include LICENSE README.md MANIFEST.in
 include versioneer.py
-include YOURPACKAGE/_version.py
+include Swift_host_subtraction/_version.py
+
+recursive-include mymodule *.py
+include versioneer.py
