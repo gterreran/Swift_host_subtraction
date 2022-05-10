@@ -94,7 +94,7 @@ def create_product(_flist,_filter,template=0):
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
     
-    fig_dir=os.path.join('reduction'+_filter+'figures')
+    fig_dir=os.path.join('reduction',_filter,'figures')
     if not os.path.isdir(fig_dir):
         os.mkdir(fig_dir)
 

@@ -38,7 +38,7 @@ if __name__ == "__main__":
     for filter in filt_list:
 
         filter_dir=os.path.join('reduction',filter)
-        if not os.path.isdir():
+        if not os.path.isdir(filter_dir):
             os.mkdir(filter_dir)
 
         print('Working on filter '+filter)
