@@ -103,3 +103,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+#workflows
+.github/workflows/build-deploy-container.yml
+.github/workflows/publish-to-anaconda.yml
+.github/workflows/publish-to-pypi.yml
+.github/workflows/python-package.yml
