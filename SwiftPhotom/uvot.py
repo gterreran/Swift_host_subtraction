@@ -1,5 +1,6 @@
-import sys,glob,os
+import sys,glob,os,errno
 import astropy.io.fits as pf
+import SwiftPhotom.errors
 import SwiftPhotom.commands as sc
 import numpy as np
 import matplotlib.pyplot as plt
@@ -11,6 +12,10 @@ Vega={'V':-0.01,'B':-0.13,'U':1.02,'UVW1':1.51,'UVM2':1.69,'UVW2':1.73}
 mjdref = 51910.0  #  jd reference used by swift
 
 def sort_filters(_filt_list):
+    '''
+    Function to recognize filter-related keywords
+    '''
+    
     full_filter_list=['V','B','U','UVW1','UVM2','UVW2']
     if _filt_list=='ALL':
         return full_filter_list
@@ -25,14 +30,58 @@ def sort_filters(_filt_list):
                 print('WARNING - Filter %s not recognized. Skipped.\n' % _f)
                 continue
             out_filter_list.append(_f.upper())
+        
+        if len(out_filter_list)==0:
+            raise SwiftPhotom.errors.FilterError
+        
         return out_filter_list
+
+def load_obsid(_obsid_string):
+    '''
+    Looking for sky frames with the given ObsID.
+    The search is done in the working directory
+    and in all subdirectories.
+    It will look for file with the conventional
+    naming
+    
+    sw[obsID][obsIdx]u[filter]_ex.img.gz
+    
+    or without the .gz
+    '''
+
+    #in the file path the ObsID have 8 digits, with leading zeros
+    obsid=_obsid_string.zfill(8)
+
+    out_file_list=[]
+
+    for root, dirs, files in os.walk("."):
+        for file in files:
+            if file.startswith('sw'+obsid) and (file.endswith('_sk.img.gz') or file.endswith('_ex.img')):
+                sky_frame = os.path.join(root,file)
+                #skipping files in the products folder
+                if 'products' not in os.path.normpath(sky_frame).split(os.sep):
+                    out_file_list.append(sky_frame)
+    
+    return out_file_list
 
 
 def interpret_infile(_infile):
-    #file_list[0] will be the object file list
-    #file_list[1] will be the template file list
-    #creating a single list, I can fill them both
-    #with a for loop, even if only the object is provided.
+    '''
+    Interpret what type of input the user is providing
+    
+    _infile will be a list of strings with either one
+    or two elements
+    
+    The output will be file_list, a list containing
+    2 lists:
+    file_list[0] will be the object file list
+    file_list[1] will be the template file list
+    
+    Creating a single list, I can fill them both
+    with a for loop, even if only the object list is
+    provided.
+    '''
+    
     file_list=[[],[]]
     
     for i in range(len(_infile)):
@@ -42,7 +91,8 @@ def interpret_infile(_infile):
             file_exist=0
         
         if file_exist:
-            if _infile[i].endswith('gz') or _infile[i].endswith('img'):
+            #single file is provided
+            if _infile[i].endswith('_sk.img.gz') or _infile[i].endswith('_sk.img'):
                 file_list[i].append(_infile[i])
             else:
                 with open(_infile[i]) as inp:
@@ -51,13 +101,22 @@ def interpret_infile(_infile):
                         if os.path.isfile(ff):
                             file_list[i].append(ff)
                         else:
-                            print(ff+' not found. Skipped.')
+                            list_from_obsid = load_obsid(ff)
+                            if len(list_from_obsid) == 0:
+                                print(ff+' not found. Skipped.')
+                            else:
+                                file_list[i] = file_list[i] + list_from_obsid
+                
+                if len(file_list[i])==0:
+                    raise SwiftPhotom.errors.ListError(_infile[i])
 
+        #If no file exists, maybe an ObsID was provided.
         else:
-            file_string=os.path.join(_infile[i]+'*','uvot','image','sw'+_infile[i]+'*_sk.img*')
-            file_list[i]=glob.glob(file_string)
+            file_list[i] = load_obsid(_infile[i])
+            
+            #If we reached this point there is a problem with
             if len(file_list[i])==0:
-                print('Cannot interpret '+_infile[i]+'. Interrupt.')
+                raise SwiftPhotom.errors.FileNotFound
 
     return file_list
 
@@ -73,6 +132,11 @@ def check_aspect_correction(_infile):
     del hdu
 
 def sort_file_list(_flist):
+    '''
+    Organize the file list into a dictionary
+    sorted by filter
+    '''
+    
     out_file_list={}
     for file in _flist:
         filter=pf.getheader(file)['FILTER']

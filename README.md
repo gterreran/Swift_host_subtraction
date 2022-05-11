@@ -61,7 +61,7 @@ fk5;circle(15:03:49.97,+42:06:50.52,3")
 A 3 arcseconds extraction is a sensible aperture extraction for Swift data, but does not necessarily reflect all the user cases. Therefore you can change the size of your aperture in your `.reg` file. The script will automatically extract photometry with a 5 arcseconds aperture as well in any case. The aperture of the background region instead can be much bigger, since the count rates will be averaged over the whole area. A sensible size is 20 arcseconds, but the most important aspect is that no sources must be present in this region.
 The script assumes that the 2 region files are called `sn.reg` and `snbkg.reg` (the author studies mainly supernovae :-) ). If you use these names, the script will recognize them automatically, otherwise you will have to specify the alternative names using the appropriate flags. 
 
-A common practice is to insert the path to all of the Swift images into a list. The images files are the format `sw[obsID][obsIdx]u[filter]_ex.img.gz` (you can unpack the images if you want, the script will recognize them anyway). If you are running the script from a top folder with all the observed epochs inside, you could easily create the list doing
+A common practice is to insert the path to all of the Swift images into a list. The images files are the format `sw[obsID][obsIdx]u[filter]_sk.img.gz` (you can unpack the images if you want, the script will recognize them anyway). If you are running the script from a top folder with all the observed epochs inside, you could easily create the list doing
 
 ```
 ls 000*/uvot/image/sw000*_ex.img.gz > obj.lst
