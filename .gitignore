@@ -109,4 +109,3 @@ venv.bak/
 .github/workflows/publish-to-anaconda.yml
 .github/workflows/publish-to-pypi.yml
 .github/workflows/python-package.yml
-.github/workflows/deploy-github-pages.yml 
