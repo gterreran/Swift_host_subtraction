@@ -308,7 +308,7 @@ man_pages = [
 # dir menu entry, description, category)
 texinfo_documents = [
     (master_doc, 'Swift_host_subtraction', u'Swift_host_subtraction Documentation',
-     author, 'Swift_host_subtraction', 'White dwarf Accretion w/ COSMIC.',
+     author, 'Swift_host_subtraction', 'Swift photometry',
      'Miscellaneous'),
 ]
 

@@ -224,6 +224,6 @@ pseudoxml:
 
 .PHONY: apidoc
 apidoc:
-	sphinx-apidoc -o api/ ../Swift_host_subtraction --no-toc --separate --no-headings --force
+	sphinx-apidoc -o api/ ../SwiftPhotom --no-toc --separate --no-headings --force
 	@echo
 	@echo "APIdoc run is complete."
