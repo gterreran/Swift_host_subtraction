@@ -16,7 +16,7 @@ import sys
 import os
 import re
 
-from Swift_host_subtraction import __version__ as Swift_host_subtraction_version
+from SwiftPhotom import __version__ as Swift_host_subtraction_version
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
