@@ -2,7 +2,7 @@
 
 This is a python package to perform aperture photometry on a single source in data from the Ultraviolet Optical Telescope ([UVOT](https://swift.gsfc.nasa.gov/about_swift/uvot_desc.html); [Roming et al. 2005](https://ui.adsabs.harvard.edu/abs/2005SSRv..120...95R/abstract)) on board the [Neil Gehrels Swift Observatory](https://swift.gsfc.nasa.gov) ([Gehrels et al. 2004](https://ui.adsabs.harvard.edu/abs/2004ApJ...611.1005G/abstract)). In particular, this package is oriented towards transient studies, as it can calculate template-subtracted luminosities if a template image, or a list of template images, is provided. 
 
-This project is based greatly on [Peter J. Brown](https://pbrown801.github.io)'s work. He wrote the original code in IDL, and published it in his [PhD Thesis](https://etda.libraries.psu.edu/files/final_submissions/4865). The author of this script mainly translated that in python, adding some extra automations, controls, and features. The aperture photometry is done following the standard guidelines described in [Brown et al. (2009)](https://ui.adsabs.harvard.edu/abs/2009AJ....137.4517B/abstract). The image subtraction is performed following the prescriptions outlined in [Brown et al. (2014)](https://ui.adsabs.harvard.edu/abs/2014Ap%26SS.354...89B/abstract). See the full documentation (work in progress) for more details.
+This project is based greatly on [Peter J. Brown](https://pbrown801.github.io)'s work. He wrote the original code in IDL, and published it in his [PhD Thesis](https://etda.libraries.psu.edu/files/final_submissions/4865). The author of this script mainly translated that in python, adding some extra automations, controls, and features. The aperture photometry is done following the standard guidelines described in [Brown et al. (2009)](https://ui.adsabs.harvard.edu/abs/2009AJ....137.4517B/abstract). The image subtraction is performed following the prescriptions outlined in [Brown et al. (2014)](https://ui.adsabs.harvard.edu/abs/2014Ap%26SS.354...89B/abstract). See the full [Documentation](https://gterreran.github.io/Swift_host_subtraction/) (work in progress) for more details.
 
 If you are interested in supernova light curves, check out also the Swift's Optical/Ultraviolet Supernova Archive ([SOUSA](https://pbrown801.github.io/SOUSA/)).
 
@@ -21,7 +21,7 @@ python setup.py install
 
 # Using this Code
 
-Many things happen under the hood in this script, so to have a full grasp on what is actually happening, the user is invited to consult the full Documentation (work in progress). 
+Many things happen under the hood in this script, so to have a full grasp on what is actually happening, the user is invited to consult the full [Documentation](https://gterreran.github.io/Swift_host_subtraction/) (work in progress). 
 
 ## Preliminary steps
 
@@ -64,7 +64,7 @@ The script assumes that the 2 region files are called `sn.reg` and `snbkg.reg` (
 A common practice is to insert the path to all of the Swift images into a list. The images files are the format `sw[obsID][obsIdx]u[filter]_sk.img.gz` (you can unpack the images if you want, the script will recognize them anyway). If you are running the script from a top folder with all the observed epochs inside, you could easily create the list doing
 
 ```
-ls 000*/uvot/image/sw000*_ex.img.gz > obj.lst
+ls 000*/uvot/image/sw000*_sk.img.gz > obj.lst
 ```
 
 then all your images will be listed inside the `obj.lst` text file (the name and extension here are not important). You can do the same with your template images and create a second list, let's call it `templ.lst` for reference. 
@@ -79,7 +79,7 @@ The template file is not necessary to run the script. If no template list is pro
 
 ## The output
 
-The code will create a folder named `reduction` which will contain all the products of the extraction. In the top folder, the 2 `.dat` files contain the final magnitudes (by default in Vega, but you can change that with the `-a` flag) of the 2 extractions, the one with the aperture size provided by the user, and the one with a 5 arcsecond aperture. Then there will be a folder for every filter. These contain quicklook figures to check the goodness of the extraction. Check the full documentation (work in progress) for more info about all the product files.
+The code will create a folder named `reduction` which will contain all the products of the extraction. In the top folder, the 2 `.dat` files contain the final magnitudes (by default in Vega, but you can change that with the `-a` flag) of the 2 extractions, the one with the aperture size provided by the user, and the one with a 5 arcsecond aperture. Then there will be a folder for every filter. These contain quicklook figures to check the goodness of the extraction. Check the full [Documentation](https://gterreran.github.io/Swift_host_subtraction/) (work in progress) for more info about all the product files.
 
 *WARNING* - every time you run `Swift_photom_host`, the folder will be deleted and recreated, so if you need to compare different reductions, remember to rename that folder to avoid unwanted superscription.
 
