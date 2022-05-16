@@ -44,7 +44,7 @@ def load_obsid(_obsid_string):
     It will look for file with the conventional
     naming
     
-    sw[obsID][obsIdx]u[filter]_ex.img.gz
+    sw[obsID][obsIdx]u[filter]_sk.img.gz
     
     or without the .gz
     '''
@@ -56,7 +56,7 @@ def load_obsid(_obsid_string):
 
     for root, dirs, files in os.walk("."):
         for file in files:
-            if file.startswith('sw'+obsid) and (file.endswith('_sk.img.gz') or file.endswith('_ex.img')):
+            if file.startswith('sw'+obsid) and (file.endswith('_sk.img.gz') or file.endswith('_sk.img')):
                 sky_frame = os.path.join(root,file)
                 #skipping files in the products folder
                 if 'products' not in os.path.normpath(sky_frame).split(os.sep):

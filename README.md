@@ -64,7 +64,7 @@ The script assumes that the 2 region files are called `sn.reg` and `snbkg.reg` (
 A common practice is to insert the path to all of the Swift images into a list. The images files are the format `sw[obsID][obsIdx]u[filter]_sk.img.gz` (you can unpack the images if you want, the script will recognize them anyway). If you are running the script from a top folder with all the observed epochs inside, you could easily create the list doing
 
 ```
-ls 000*/uvot/image/sw000*_sk.img.gz > obj.lst
+ls */uvot/image/sw*_sk.img.gz > obj.lst
 ```
 
 then all your images will be listed inside the `obj.lst` text file (the name and extension here are not important). You can do the same with your template images and create a second list, let's call it `templ.lst` for reference. 
