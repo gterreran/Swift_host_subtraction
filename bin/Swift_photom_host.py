@@ -13,8 +13,8 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--bg",dest="bg_reg",type=str,default='snbkg.reg',help=SH.bg_reg)
     parser.add_argument("-d", "--detection",dest="det_limit",type=float,default=3.,help=SH.det_limit)
     parser.add_argument("-a", "--ab",dest="ab",default=0, action='store_true',help=SH.ab_mag)
-    
     parser.add_argument("-f", "--filter", dest="filter",default='ALL', help=SH.filter)
+    parser.add_argument("--no_combine",dest="no_combine",default=0, action='store_true',help=SH.no_combine)
     
     
     
@@ -45,7 +45,7 @@ if __name__ == "__main__":
         template_exists=1
 
         print('Creating product file for the object.')
-        prod_file=up.create_product(obj_file_list[filter],filter)
+        prod_file=up.create_product(obj_file_list[filter],filter,merge=args.no_combine)
 
         print('Running uvotmaghist on the object image.\n')
         phot_file=up.run_uvotmaghist(prod_file,args.sn_reg,args.bg_reg,filter)
@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
         if template_exists:
             print('Creating product file for the template.')
-            prod_file=up.create_product(tem_file_list[filter],filter,template=1)
+            prod_file=up.create_product(tem_file_list[filter],filter,template=1,merge=args.no_combine)
 
             print('Running uvotmaghist on the template image.\n')
             templ_file=up.run_uvotmaghist(prod_file,args.sn_reg,args.bg_reg,filter)

@@ -32,6 +32,7 @@ Please consult these pages for more details on using GravitySpy:
    :maxdepth: 1
 
    inputs/index
+   extraction/index
 
 Indices and tables
 ==================

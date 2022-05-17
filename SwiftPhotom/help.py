@@ -11,3 +11,5 @@ det_limit='Signal-to-noise detection limit. A signal-to-noise above this value w
 ab_mag='Change the magnitude system to AB (default is Vega).'
 
 filter='Selection of filters to be analysed. Acceptable filters: V, B, U, UVW1, UVM2, UVW2, OPT, UV, ALL,. Default is ALL, meaning that all the filters in present in the provided list will be analysed. Flags for optical only (OPT) and ultraviolet only (UV) are also available. A custum subset of filters can be provided instead. The format should be a comma separated list, with no spaces. Example: V,U,UVM2'
+
+no_combine='Prevents to merge different extensions of a single file. If set True, this applies to all files, including the template.'

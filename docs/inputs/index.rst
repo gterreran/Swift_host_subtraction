@@ -53,12 +53,14 @@ List of files
 The User can list all the ``_sk.img.gz`` files into a text file, and use the name of this latter file as the input to the script. If the files are not in the current working directory, the relative path must be provided (or alternatively, the full path). If the User is running the script from a top folder with all the ObsID folder inside, and the Swift default tree structure is maintained, all the correct files can be quickly included in a text file by 
 
 .. code-block:: bash
+
 	ls */uvot/image/sw*_sk.img.gz > obj.lst
 
 
 then all your images will be listed inside the ``obj.lst`` text file (the name and extension here are not important), which will look something like this
 
 .. code-block::
+
 	00013612001/uvot/image/sw00013612001uw1_sk.img.gz
     00013612001/uvot/image/sw00013612001uw2_sk.img.gz
     03105174001/uvot/image/sw03105174001uuu_sk.img.gz
@@ -83,6 +85,7 @@ List of files and Target_ID
 The list file can also contain multiple ``Target_IDs``, or a combination of files and ``Target_IDs``. The following list file is a valid input.
 
 .. code-block::
+
 	00013612001/uvot/image/sw00013612001uw1_sk.img.gz
     00013612001/uvot/image/sw00013612001uw2_sk.img.gz
     3105174

@@ -121,6 +121,13 @@ def interpret_infile(_infile):
     return file_list
 
 def check_aspect_correction(_infile):
+    '''
+    Simply check if the 'ASPCORR' label in the header
+    of each extension is equal to 'DIRECT'. If it isn't,
+    it prints out a WARNING, notifying that astrometry
+    could be off.
+    '''
+    
     hdu=pf.open(_infile)
     for i in range(len(hdu)):
         if hdu[i].name=='PRIMARY': continue
@@ -147,13 +154,37 @@ def sort_file_list(_flist):
     return out_file_list
 
 def combine(_list,_outfile):
+    '''
+    Combines images with fappend
+    '''
+    
     for i,img in enumerate(_list):
         if i==0:
             os.system('cp '+img+' '+_outfile)
         else:
             sc.fappend(img,_outfile)
 
-def create_product(_flist,_filter,template=0):
+def create_product(_flist,_filter,template=0,no_combine=0):
+    '''
+    If a file has multiple extensions, these are
+    first combined into a single image. If the
+    FRAMTIMEs are different, than no merging is
+    not possible. The merging is carried out by
+    uvotimsum, and the combined images are saved
+    in the 'mid-products' folder, created for each
+    filer inside the 'reduction' directory.
+    
+    If the user prefer to extract every extension
+    separately, they can use the --no_combine flag.
+    
+    All the files are then appended to a single
+    'product file', which end up containing all
+    extensions of all images.
+    
+    During this step, the aspect correction for each
+    file is also checked.
+    '''
+    
     out_dir=os.path.join('reduction',_filter,'mid-products')
     if not os.path.isdir(out_dir):
         os.mkdir(out_dir)
@@ -165,6 +196,12 @@ def create_product(_flist,_filter,template=0):
     prod_list=[]
     for file in _flist:
         check_aspect_correction(file)
+        if no_combine:
+            for i in range(len(hdu)):
+                if hdu[i].name=='PRIMARY': continue
+                prod_list.append(file+'['+str(i)+']')
+            continue
+            
         hdu=pf.open(file)
         obsID=hdu[0].header['OBS_ID']
         out_file=os.path.join(out_dir,obsID+'_'+_filter+'.fits')
