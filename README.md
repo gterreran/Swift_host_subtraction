@@ -79,7 +79,7 @@ The template file is not necessary to run the script. If no template list is pro
 
 ## The output
 
-The code will create a folder named `reduction` which will contain all the products of the extraction. In the top folder, the 2 `.dat` files contain the final magnitudes (by default in Vega, but you can change that with the `-a` flag) of the 2 extractions, the one with the aperture size provided by the user, and the one with a 5 arcsecond aperture. Then there will be a folder for every filter. These contain quicklook figures to check the goodness of the extraction. Check the full [Documentation](https://gterreran.github.io/Swift_host_subtraction/) (work in progress) for more info about all the product files.
+The code will create a folder named `reduction` which will contain all the products of the extraction. In the top folder, the 2 `.json` files contain the final magnitudes (by default in Vega, but you can change that with the `-a` flag) of the 2 extractions, the one with the aperture size provided by the user, and the one with a 5 arcsecond aperture. Then there will be a folder for every filter. These contain quicklook figures to check the goodness of the extraction. Check the full [Documentation](https://gterreran.github.io/Swift_host_subtraction/) (work in progress) for more info about all the product files.
 
 *WARNING* - every time you run `Swift_photom_host`, the folder will be deleted and recreated, so if you need to compare different reductions, remember to rename that folder to avoid unwanted superscription.
 
