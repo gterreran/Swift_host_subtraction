@@ -22,6 +22,10 @@ def uvotmaghist(_in,_reg,_bgreg,_out,_gif):
 def fappend(_in,_out):
     comm = 'fappend '+_in+' '+_out
     run(comm)
+    
+def fcopy(_in,_out):
+    comm = 'fcopy '+_in+' '+_out
+    run(comm)
 
 
 #def find_attfile(_infile):

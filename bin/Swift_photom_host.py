@@ -1,4 +1,4 @@
-import argparse,os
+import argparse,os,shutil
 import SwiftPhotom.help as SH
 import SwiftPhotom.uvot as up
 
@@ -21,6 +21,8 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
+    ap_size = up.get_aperture_size(args.sn_reg)
+
     #check_heasoft()
 
     obj_file_list,tem_file_list=up.interpret_infile(args.infile)
@@ -28,14 +30,19 @@ if __name__ == "__main__":
     obj_file_list=up.sort_file_list(obj_file_list)
     tem_file_list=up.sort_file_list(tem_file_list)
 
-    if not os.path.isdir('reduction'):
-        os.mkdir('reduction')
+    if os.path.isdir('reduction'):
+        shutil.rmtree('reduction')
+    
+    os.mkdir('reduction')
 
-    mag={}
+    mag={'user_ap':[], '5_arcsec':[]}
 
     filt_list=up.sort_filters(args.filter)
 
     for filter in filt_list:
+
+        if filter not in obj_file_list:
+            continue
 
         filter_dir=os.path.join('reduction',filter)
         if not os.path.isdir(filter_dir):
@@ -45,7 +52,7 @@ if __name__ == "__main__":
         template_exists=1
 
         print('Creating product file for the object.')
-        prod_file=up.create_product(obj_file_list[filter],filter,merge=args.no_combine)
+        prod_file=up.create_product(obj_file_list[filter],filter,no_combine=args.no_combine)
 
         print('Running uvotmaghist on the object image.\n')
         phot_file=up.run_uvotmaghist(prod_file,args.sn_reg,args.bg_reg,filter)
@@ -63,20 +70,24 @@ if __name__ == "__main__":
 
         if template_exists:
             print('Creating product file for the template.')
-            prod_file=up.create_product(tem_file_list[filter],filter,template=1,merge=args.no_combine)
+            prod_file=up.create_product(tem_file_list[filter],filter,template=1,no_combine=args.no_combine)
 
             print('Running uvotmaghist on the template image.\n')
             templ_file=up.run_uvotmaghist(prod_file,args.sn_reg,args.bg_reg,filter)
 
-            mag[filter]=up.extract_photometry(phot_file,args.ab,args.det_limit,templ_file)
+            mag_filter=up.extract_photometry(phot_file,args.ab,args.det_limit,ap_size,templ_file)
 
         else:
-            mag[filter]=up.extract_photometry(phot_file,args.ab,args.det_limit)
+            mag_filter=up.extract_photometry(phot_file,args.ab,args.det_limit,ap_size)
 
+        for ap in mag_filter:
+            mag[ap] = mag[ap] + mag_filter[ap]
+        
+        
         print('\n')
 
 
-    up.output_mags(mag)
+    up.output_mags(mag,ap_size)
 
 
 

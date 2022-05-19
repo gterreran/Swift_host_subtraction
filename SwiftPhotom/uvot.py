@@ -1,10 +1,9 @@
-import sys,glob,os,errno
+import os,json
 import astropy.io.fits as pf
 import SwiftPhotom.errors
 import SwiftPhotom.commands as sc
 import numpy as np
 import matplotlib.pyplot as plt
-from astropy.time import Time
 
 ZP={'V':[17.88,0.01],'B':[18.98,0.02],'U':[19.36,0.02],'UVW1':[18.95,0.03],'UVM2':[18.54,0.03],'UVW2':[19.11,0.03]}
 Vega={'V':-0.01,'B':-0.13,'U':1.02,'UVW1':1.51,'UVM2':1.69,'UVW2':1.73}
@@ -120,6 +119,17 @@ def interpret_infile(_infile):
 
     return file_list
 
+def get_aperture_size(_reg):
+    '''
+    Retrieve the aperture siza from the region file.
+    '''
+    with open(_reg) as inp:
+        for line in inp:
+            if line[0]=='#':continue
+            size=line.strip('\n').split(',')[-1][:-2]
+
+    return size
+
 def check_aspect_correction(_infile):
     '''
     Simply check if the 'ASPCORR' label in the header
@@ -160,7 +170,7 @@ def combine(_list,_outfile):
     
     for i,img in enumerate(_list):
         if i==0:
-            os.system('cp '+img+' '+_outfile)
+            sc.fcopy(img,_outfile)
         else:
             sc.fappend(img,_outfile)
 
@@ -196,17 +206,20 @@ def create_product(_flist,_filter,template=0,no_combine=0):
     prod_list=[]
     for file in _flist:
         check_aspect_correction(file)
+        
+        hdu=pf.open(file)
+        
         if no_combine:
             for i in range(len(hdu)):
                 if hdu[i].name=='PRIMARY': continue
                 prod_list.append(file+'['+str(i)+']')
             continue
-            
-        hdu=pf.open(file)
+        
         obsID=hdu[0].header['OBS_ID']
         out_file=os.path.join(out_dir,obsID+'_'+_filter+'.fits')
         if os.path.isfile(out_file):
             os.remove(out_file)
+        
         framtime=[]
 
         for i in range(len(hdu)):
@@ -246,10 +259,10 @@ def run_uvotmaghist(_prod_file,_sn_reg,_bg_reg,_filter):
 
     return photo_out
 
-def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
+def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
 
     ####
-    #The default aperture of uvotmahist is 5 arcsec.
+    #The default aperture of uvotmaghist is 5 arcsec.
     #Corrections to retrieve this fluxes are provide.
     #We can compare the 2 apertures.
     ####
@@ -259,11 +272,13 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
 
     if _ab==1:
         Vega_corr={'V':0,'B':0,'U':0,'UVW1':0,'UVM2':0,'UVW2':0}
+        mag_sys = 'AB'
     else:
         Vega_corr=Vega
+        mag_sys = 'Vega'
 
-    col={'3_arcsec':'b','5_arcsec':'r'}
-    mag={'3_arcsec':{'p':[],'u':[]},'5_arcsec':{'p':[],'u':[]}}
+    col={'user_ap':'b','5_arcsec':'r'}
+    mag={'user_ap':[],'5_arcsec':[]}
 
     BCR_temp={}
     BCRe_temp={}
@@ -271,8 +286,8 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
     for i,file in enumerate([_templ_file,_phot_file]):
         if file==None:
             #In case there is no template, nothing will be subtracted.
-            BCR_temp={'3_arcsec':0.,'5_arcsec':0.}
-            BCRe_temp={'3_arcsec':0.,'5_arcsec':0.}
+            BCR_temp={'user_ap':0.,'5_arcsec':0.}
+            BCRe_temp={'user_ap':0.,'5_arcsec':0.}
             template=0
             continue
     
@@ -281,9 +296,10 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
         filter=dd['FILTER'][0]
         hdu.close()
 
+        #The long-term detector sensitivity correction factor.
         SC=dd['SENSCORR_FACTOR']
 
-        #These is the count rate for 3arcsec
+        #This is the count rate for the user defined aperture
         S3BCR=dd['COI_SRC_RATE']*SC
         
         #adding 3% error on count rate of the source in quadrature to poission error
@@ -292,7 +308,7 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
         else:
             S3BCRe=dd['COI_SRC_RATE_ERR']
         
-        #These is the count rate for 3arcsec
+        #These is the count rate for 5arcsec
         S5CR=dd['RAW_STD_RATE']*dd['COI_STD_FACTOR']
         S5CRe=dd['RAW_STD_RATE_ERR']*dd['COI_STD_FACTOR']
         S5BCR=((dd['RAW_STD_RATE'] *dd['COI_STD_FACTOR'] * SC) - (dd['COI_BKG_RATE'] * SC * dd['STD_AREA']))
@@ -314,7 +330,7 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
         fig_sub=plt.figure()
         ax_sub=fig_sub.add_subplot(111)
 
-        for BCR,BCRe,label in [[S3BCR,S3BCRe,'3_arcsec'] , [S5BCR,S5BCRe,'5_arcsec']]:
+        for BCR,BCRe,label in [[S3BCR,S3BCRe,'user_ap'] , [S5BCR,S5BCRe,'5_arcsec']]:
         
 
 
@@ -347,7 +363,7 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
                 BCGR=(BCR-BCR_temp[label])
                 BCGRe=np.sqrt((BCRe)**2+(BCRe_temp[label])**2)
 
-                if label=='3_arcsec':
+                if label=='user_ap':
                     # apply aperture correction
                     BCGAR=BCGR*dd['AP_FACTOR']
                     BCGARe=BCGRe*dd['AP_FACTOR_ERR']
@@ -383,33 +399,56 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
 
                 #convert rate,err to magnitudes"
                 for j,CR in enumerate(BCGARs):
+                    mag[label].append({
+                    'filter':filter,
+                    'aperture_correction':float(dd['AP_FACTOR'][j]),
+                    'coincidence_loss_correction':float(dd['COI_STD_FACTOR'][j]),
+                    'mag_sys':mag_sys,
+                    'mag_limit':float(BCGAMl[j]),
+                    'template_subtracted':bool(template),
+                    'mjd':float(mjd[j])
+                    })
+                    
+                    #detection
                     if BCGARs[j]>=_det_limit:
                         BCGAM=-2.5*np.log10(BCGAR[j])+ZP[filter][0]-Vega_corr[filter]
                         BCGAMe=np.sqrt(((2.5/np.log(10.))*((BCGARe[j]/BCGAR[j])))**2+ZP[filter][1]**2)
-                        mag[label]['p'].append([mjd[j],BCGAM,BCGAMe])
+                    
+                        mag[label][-1]['upper_limit']=False
                         print('%.2f\t%.3f\t%.3f' % (mjd[j],BCGAM,BCGAMe))
+                    #non detection
                     else:
                         BCGAM=BCGAMl[j]
                         BCGAMe=0.2
-                        mag[label]['u'].append([mjd[j],BCGAM,BCGAMe])
+                        
+                        mag[label][-1]['upper_limit']=True
                         print('%.2f\t> %.3f (%.2f)' % (mjd[j],BCGAM,np.fabs(BCGARs[j])))
-                    all_point.append([mjd[j],BCGAM])
                     
-                if len(mag[label]['p'])>0:
-                    xx,yy,ee=zip(*sorted(mag[label]['p']))
+                    mag[label][-1]['mag'] = float(BCGAM)
+                    mag[label][-1]['mag_err'] = float(BCGAMe)
+                    all_point.append([mjd[j],BCGAM])
+ 
+                detections = [[ep['mjd'], ep['mag'], ep['mag_err']] for ep in mag[label] if not ep['upper_limit']]
+                non_detections = [[ep['mjd'], ep['mag'], ep['mag_err']] for ep in mag[label] if ep['upper_limit']]
+                
+                if len(detections)>0:
+                    xx,yy,ee=zip(*sorted(detections))
                     ax_sub.errorbar(xx,yy,yerr=ee,marker='o', color=col[label],label=label,ls='')
 
                 
-                if len(mag[label]['u'])>0:
-                    xx,yy,ee=zip(*sorted(mag[label]['u']))
+                if len(non_detections)>0:
+                    xx,yy,ee=zip(*sorted(non_detections))
                     ax_sub.errorbar(xx,yy, yerr=[-1.*np.array(ee),[0]*len(ee)], uplims=True, marker='o', color=col[label],label=label,ls='')
-
+                
+                #since I'm plotting detections and non detections separately
+                #this is done only to have a line connecting all epochs
                 xx,yy=zip(*sorted(all_point))
                 ax_sub.plot(xx,yy, color=col[label])
-                
-                
 
-                print('\n'+label[0]+'"aperture done!\n')
+                if label=='user_ap':
+                    print('\n'+_ap_size+'" aperture done!\n')
+                else:
+                    print('\n5" aperture done!\n')
         
         if i==1:
         
@@ -464,75 +503,9 @@ def extract_photometry(_phot_file,_ab,_det_limit,_templ_file=None):
 
     return mag
 
-
-def output_mags(_mag):
-
-    #This is neither clever nor fast, but it works.
-
-    out_mag={}
-    epochs=[]
-    for ap in ['3_arcsec','5_arcsec']:
-        #for f in ['UVW2','UVM2','UVW1','U','B','V','R','I']:
-        for f in _mag:
-            for t in _mag[f][ap]:
-                for el in _mag[f][ap][t]:
-                    m=round(el[0],2)
-                    if m not in epochs:
-                        out_mag[m]={}
+def output_mags(_mag,_ap_size):
+    with open(os.path.join('reduction',_ap_size+'_arcsec_photometry.json'),'w') as out:
+        out.write(json.dumps(_mag['user_ap'], indent = 4))
     
-        for m in out_mag:
-            for f in ['UVW2','UVM2','UVW1','U','B','V','R','I']:
-                if f not in out_mag[m]:
-                    out_mag[m][f]={'p':(9999,0),'u':(9999,0)}
-
-        for f in _mag:
-            for t in _mag[f][ap]:
-                for el in _mag[f][ap][t]:
-                    m=round(el[0],2)
-                    out_mag[m][f][t]=(el[1], el[2])
-        
-
-        tag={'p':' 1','u':'-1'}
-
-
-#        for e in _mag:
-#            for f in _mag[e]:
-#                for t in _mag[e][f]:
-#                    #print e,f,t
-#                    pass
-
-        #'A':'UVW1','D':'UVM2','S':'UVW2'
-
-        eps=sorted([el for el in out_mag])
-
-        snlc =open('reduction/'+ap+'snlc.dat','w')
-        snlc.write('      Date        JD            S           D           A            S notes\n')
-        for j in eps:
-            for t in ['p','u']:
-                if len(list(set([out_mag[j][ff][t][1] for ff in ['UVW2','UVM2','UVW1']])))==1: continue
-                date=''.join(Time(j, format='mjd').iso.split()[0].split('-'))
-                snlc.write("%s %.2f"%(date,j))
-                for f in ['UVW2','UVM2','UVW1']:
-                    if out_mag[j][f][t][0]==9999:
-                        snlc.write('   9999  0.00 ')
-                    else:
-                        snlc.write(' %6.2f %5.2f '%(abs(out_mag[j][f][t][0]),out_mag[j][f][t][1]))
-                snlc.write(' '+tag[t]+' Swift \n')
-
-        snlc.write('\n')
-
-        snlc.write('      Date        JD            U           B           V            R          I           S  notes\n')
-        for j in eps:
-            for t in ['p','u']:
-                if len(list(set([out_mag[j][ff][t][1] for ff in 'UBVRI'])))==1: continue
-                date=''.join(Time(j, format='mjd').iso.split()[0].split('-'))
-                snlc.write("%s %.2f"%(date,j))
-                for f in 'UBVRI':
-                    if out_mag[j][f][t][0]==9999:
-                        snlc.write('   9999  0.00 ')
-                    else:
-                        snlc.write(' %6.2f %5.2f '%(abs(out_mag[j][f][t][0]),out_mag[j][f][t][1]))
-                snlc.write(' '+tag[t]+' Swift \n')
-        snlc.close()
-        del snlc
-
+    with open(os.path.join('reduction','5_arcsec_photometry.json'),'w') as out:
+        out.write(json.dumps(_mag['5_arcsec'], indent = 4))
