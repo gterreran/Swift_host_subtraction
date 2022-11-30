@@ -1,0 +1,4 @@
+.. automodule:: SwiftPhotom.help
+   :members:
+   :undoc-members:
+   :show-inheritance:

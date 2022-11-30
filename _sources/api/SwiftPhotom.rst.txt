@@ -1,0 +1,21 @@
+SwiftPhotom package
+===================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   SwiftPhotom.commands
+   SwiftPhotom.errors
+   SwiftPhotom.help
+   SwiftPhotom.uvot
+
+Module contents
+---------------
+
+.. automodule:: SwiftPhotom
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Input types &mdash; Swift_host_subtraction 0+untagged.1.g99054ea documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/Swift_host_subtraction-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Photometry Extraction" href="../extraction/index.html" />
+    <link rel="prev" title="Welcome to SwiftPhotom’s documentation!" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> Swift_host_subtraction
+          </a>
+              <div class="version">
+                0+untagged.1.g99054ea
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Input types</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#swift-data-structure">Swift Data Structure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#target-id">Target_ID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-of-files">List of files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#list-of-files-and-target-id">List of files and Target_ID</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../extraction/index.html">Photometry Extraction</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Swift_host_subtraction</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a></li>
+      <li class="breadcrumb-item active">Input types</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/inputs/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="input-types">
+<h1>Input types<a class="headerlink" href="#input-types" title="Permalink to this heading"></a></h1>
+<p><code class="docutils literal notranslate"><span class="pre">SwiftPhotom</span></code> can deal with inputs in different formats. Below you can find details about each of them.</p>
+<section id="swift-data-structure">
+<h2>Swift Data Structure<a class="headerlink" href="#swift-data-structure" title="Permalink to this heading"></a></h2>
+<p>The package works on pre-processed files that can be downloaded directly from the <a class="reference external" href="http://www.swift.ac.uk/archive/ql.php">Swift archive</a>. Data from the archive usually come in a single compressed file. Once unpacked, there will be a folder for each ObsID queried. An <code class="docutils literal notranslate"><span class="pre">ObsID</span></code> is an 11 digits unique number, composed by a 8 digits <code class="docutils literal notranslate"><span class="pre">Target_ID</span></code> and a 3 digits sequential <code class="docutils literal notranslate"><span class="pre">Obs_segment</span></code>. As the name suggests, <code class="docutils literal notranslate"><span class="pre">Target_IDs</span></code> are unique to each Swift target (although one target can have multiple <code class="docutils literal notranslate"><span class="pre">Target_IDs</span></code>), while the <code class="docutils literal notranslate"><span class="pre">Obs_segment</span></code> increase with the amount of data collected for a target.</p>
+<p>Each <code class="docutils literal notranslate"><span class="pre">ObsID</span></code> folder will have a structure similar to this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">ObsID</span><span class="p">]</span>
+  <span class="o">|--</span><span class="n">auxil</span>
+  <span class="o">|--</span><span class="n">xrt</span>
+  <span class="o">|--</span><span class="n">uvot</span>
+    <span class="o">|--</span><span class="n">hk</span>
+    <span class="o">|--</span><span class="n">products</span>
+    <span class="o">|--</span><span class="n">images</span>
+      <span class="o">|--</span><span class="n">sw</span><span class="p">[</span><span class="n">ObsID</span><span class="p">]</span><span class="n">u</span><span class="p">[</span><span class="n">filter1</span><span class="p">]</span><span class="n">_ex</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+      <span class="o">|--</span><span class="n">sw</span><span class="p">[</span><span class="n">ObsID</span><span class="p">]</span><span class="n">u</span><span class="p">[</span><span class="n">filter1</span><span class="p">]</span><span class="n">_rw</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+      <span class="o">|--</span><span class="n">sw</span><span class="p">[</span><span class="n">ObsID</span><span class="p">]</span><span class="n">u</span><span class="p">[</span><span class="n">filter1</span><span class="p">]</span><span class="n">_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+      <span class="o">|--</span><span class="p">[</span><span class="o">...</span><span class="p">]</span>
+      <span class="o">|--</span><span class="n">sw</span><span class="p">[</span><span class="n">ObsID</span><span class="p">]</span><span class="n">u</span><span class="p">[</span><span class="n">filterN</span><span class="p">]</span><span class="n">_ex</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+      <span class="o">|--</span><span class="n">sw</span><span class="p">[</span><span class="n">ObsID</span><span class="p">]</span><span class="n">u</span><span class="p">[</span><span class="n">filterN</span><span class="p">]</span><span class="n">_rw</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+      <span class="o">|--</span><span class="n">sw</span><span class="p">[</span><span class="n">ObsID</span><span class="p">]</span><span class="n">u</span><span class="p">[</span><span class="n">filterN</span><span class="p">]</span><span class="n">_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+</div>
+<p>depending what files you downloaded from the Swift archive. The <code class="docutils literal notranslate"><span class="pre">SwiftPhotom</span></code> package works on the <code class="docutils literal notranslate"><span class="pre">*_sk.img.gz</span></code> files, so the User will have to isolate them. This can done in 2 ways, manually, or by providing the <code class="docutils literal notranslate"><span class="pre">Target_ID</span></code>.</p>
+<p><em>WARNING - although it is not necessary to keep the tree structure described above, the scripts will work only on files that ends with ``_sk.img.gz`` (or ``_sk.img``), so be aware of this if the User plans to rename them.</em></p>
+</section>
+<section id="target-id">
+<h2>Target_ID<a class="headerlink" href="#target-id" title="Permalink to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">Target_ID</span></code> can be provided as a single input, like the following example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Swift_photom_host.py <span class="m">13612</span>
+</pre></div>
+</div>
+<p>The script will search in the working folder, and in all the subfolders, for files in the form <code class="docutils literal notranslate"><span class="pre">sw[Target_ID]*_sk.img.gz</span></code> (or also not compressed), and work on all of them. The script will automatically add leading zeros to make the <code class="docutils literal notranslate"><span class="pre">Target_ID</span></code> 8 digits long so both <code class="docutils literal notranslate"><span class="pre">13612</span></code> and <code class="docutils literal notranslate"><span class="pre">00013612</span></code> will work. Be carefull not to include also the <code class="docutils literal notranslate"><span class="pre">Obs_segment</span></code>, as it will not work. Moreover, any file renaming will likely prevent the script to recognize the correct files.</p>
+</section>
+<section id="list-of-files">
+<h2>List of files<a class="headerlink" href="#list-of-files" title="Permalink to this heading"></a></h2>
+<p>The User can list all the <code class="docutils literal notranslate"><span class="pre">_sk.img.gz</span></code> files into a text file, and use the name of this latter file as the input to the script. If the files are not in the current working directory, the relative path must be provided (or alternatively, the full path). If the User is running the script from a top folder with all the ObsID folder inside, and the Swift default tree structure is maintained, all the correct files can be quickly included in a text file by</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ls */uvot/image/sw*_sk.img.gz &gt; obj.lst
+</pre></div>
+</div>
+<p>then all your images will be listed inside the <code class="docutils literal notranslate"><span class="pre">obj.lst</span></code> text file (the name and extension here are not important), which will look something like this</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="mi">00013612001</span><span class="o">/</span><span class="n">uvot</span><span class="o">/</span><span class="n">image</span><span class="o">/</span><span class="n">sw00013612001uw1_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+<span class="mi">00013612001</span><span class="o">/</span><span class="n">uvot</span><span class="o">/</span><span class="n">image</span><span class="o">/</span><span class="n">sw00013612001uw2_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+<span class="mi">03105174001</span><span class="o">/</span><span class="n">uvot</span><span class="o">/</span><span class="n">image</span><span class="o">/</span><span class="n">sw03105174001uuu_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+<span class="mi">03105174001</span><span class="o">/</span><span class="n">uvot</span><span class="o">/</span><span class="n">image</span><span class="o">/</span><span class="n">sw03105174001uw1_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+</div>
+<p>The script will be run simply by:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Swift_photom_host.py obj.lst
+</pre></div>
+</div>
+<p>This method is more versatile than using the <code class="docutils literal notranslate"><span class="pre">Target_ID</span></code>, as it allows to be more selective with the epochs and filters to analyse, i.e. by including or removing files from the text files. Moreover, renaming files can also be possible, as long as the <code class="docutils literal notranslate"><span class="pre">*_sk.img.gz</span></code> (or <code class="docutils literal notranslate"><span class="pre">*_sk.img</span></code>) extension is kept.</p>
+</section>
+<section id="list-of-files-and-target-id">
+<h2>List of files and Target_ID<a class="headerlink" href="#list-of-files-and-target-id" title="Permalink to this heading"></a></h2>
+<p>The list file can also contain multiple <code class="docutils literal notranslate"><span class="pre">Target_IDs</span></code>, or a combination of files and <code class="docutils literal notranslate"><span class="pre">Target_IDs</span></code>. The following list file is a valid input.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="mi">00013612001</span><span class="o">/</span><span class="n">uvot</span><span class="o">/</span><span class="n">image</span><span class="o">/</span><span class="n">sw00013612001uw1_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+<span class="mi">00013612001</span><span class="o">/</span><span class="n">uvot</span><span class="o">/</span><span class="n">image</span><span class="o">/</span><span class="n">sw00013612001uw2_sk</span><span class="o">.</span><span class="n">img</span><span class="o">.</span><span class="n">gz</span>
+<span class="mi">3105174</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to SwiftPhotom’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../extraction/index.html" class="btn btn-neutral float-right" title="Photometry Extraction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Giacomo Terreran.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwiftPhotom.uvot &mdash; Swift_host_subtraction 0+untagged.1.g99054ea documentation</title>
+      <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/plot_directive.css" type="text/css" />
+      <link rel="stylesheet" href="../../_static/Swift_host_subtraction-docs.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../index.html" class="icon icon-home"> Swift_host_subtraction
+          </a>
+              <div class="version">
+                0+untagged.1.g99054ea
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../inputs/index.html">Input types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../extraction/index.html">Photometry Extraction</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Swift_host_subtraction</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">SwiftPhotom.uvot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for SwiftPhotom.uvot</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">astropy.io.fits</span> <span class="k">as</span> <span class="nn">pf</span>
+<span class="kn">import</span> <span class="nn">SwiftPhotom.errors</span>
+<span class="kn">import</span> <span class="nn">SwiftPhotom.commands</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="n">ZP</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;V&#39;</span><span class="p">:[</span><span class="mf">17.88</span><span class="p">,</span><span class="mf">0.01</span><span class="p">],</span><span class="s1">&#39;B&#39;</span><span class="p">:[</span><span class="mf">18.98</span><span class="p">,</span><span class="mf">0.02</span><span class="p">],</span><span class="s1">&#39;U&#39;</span><span class="p">:[</span><span class="mf">19.36</span><span class="p">,</span><span class="mf">0.02</span><span class="p">],</span><span class="s1">&#39;UVW1&#39;</span><span class="p">:[</span><span class="mf">18.95</span><span class="p">,</span><span class="mf">0.03</span><span class="p">],</span><span class="s1">&#39;UVM2&#39;</span><span class="p">:[</span><span class="mf">18.54</span><span class="p">,</span><span class="mf">0.03</span><span class="p">],</span><span class="s1">&#39;UVW2&#39;</span><span class="p">:[</span><span class="mf">19.11</span><span class="p">,</span><span class="mf">0.03</span><span class="p">]}</span>
+<span class="n">Vega</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;V&#39;</span><span class="p">:</span><span class="o">-</span><span class="mf">0.01</span><span class="p">,</span><span class="s1">&#39;B&#39;</span><span class="p">:</span><span class="o">-</span><span class="mf">0.13</span><span class="p">,</span><span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="mf">1.02</span><span class="p">,</span><span class="s1">&#39;UVW1&#39;</span><span class="p">:</span><span class="mf">1.51</span><span class="p">,</span><span class="s1">&#39;UVM2&#39;</span><span class="p">:</span><span class="mf">1.69</span><span class="p">,</span><span class="s1">&#39;UVW2&#39;</span><span class="p">:</span><span class="mf">1.73</span><span class="p">}</span>
+
+<span class="n">mjdref</span> <span class="o">=</span> <span class="mf">51910.0</span>  <span class="c1">#  jd reference used by swift</span>
+
+<div class="viewcode-block" id="sort_filters"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.sort_filters">[docs]</a><span class="k">def</span> <span class="nf">sort_filters</span><span class="p">(</span><span class="n">_filt_list</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Function to recognize filter-related keywords</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">full_filter_list</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">,</span><span class="s1">&#39;B&#39;</span><span class="p">,</span><span class="s1">&#39;U&#39;</span><span class="p">,</span><span class="s1">&#39;UVW1&#39;</span><span class="p">,</span><span class="s1">&#39;UVM2&#39;</span><span class="p">,</span><span class="s1">&#39;UVW2&#39;</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">_filt_list</span><span class="o">==</span><span class="s1">&#39;ALL&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">full_filter_list</span>
+    <span class="k">elif</span> <span class="n">_filt_list</span><span class="o">==</span><span class="s1">&#39;OPT&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;V&#39;</span><span class="p">,</span><span class="s1">&#39;B&#39;</span><span class="p">,</span><span class="s1">&#39;U&#39;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="n">_filt_list</span><span class="o">==</span><span class="s1">&#39;UV&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="s1">&#39;UVW1&#39;</span><span class="p">,</span><span class="s1">&#39;UVM2&#39;</span><span class="p">,</span><span class="s1">&#39;UVW2&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out_filter_list</span><span class="o">=</span><span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_f</span> <span class="ow">in</span> <span class="n">_filt_list</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">_f</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">full_filter_list</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING - Filter </span><span class="si">%s</span><span class="s1"> not recognized. Skipped.</span><span class="se">\n</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">_f</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">out_filter_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_f</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+        
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">out_filter_list</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SwiftPhotom</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">FilterError</span>
+        
+        <span class="k">return</span> <span class="n">out_filter_list</span></div>
+
+<div class="viewcode-block" id="load_obsid"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.load_obsid">[docs]</a><span class="k">def</span> <span class="nf">load_obsid</span><span class="p">(</span><span class="n">_obsid_string</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Looking for sky frames with the given ObsID.</span>
+<span class="sd">    The search is done in the working directory</span>
+<span class="sd">    and in all subdirectories.</span>
+<span class="sd">    It will look for file with the conventional</span>
+<span class="sd">    naming</span>
+<span class="sd">    </span>
+<span class="sd">    sw[obsID][obsIdx]u[filter]_sk.img.gz</span>
+<span class="sd">    </span>
+<span class="sd">    or without the .gz</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+    <span class="c1">#in the file path the ObsID have 8 digits, with leading zeros</span>
+    <span class="n">obsid</span><span class="o">=</span><span class="n">_obsid_string</span><span class="o">.</span><span class="n">zfill</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
+
+    <span class="n">out_file_list</span><span class="o">=</span><span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;sw&#39;</span><span class="o">+</span><span class="n">obsid</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_sk.img.gz&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_sk.img&#39;</span><span class="p">)):</span>
+                <span class="n">sky_frame</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span><span class="n">file</span><span class="p">)</span>
+                <span class="c1">#skipping files in the products folder</span>
+                <span class="k">if</span> <span class="s1">&#39;products&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">sky_frame</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">sep</span><span class="p">):</span>
+                    <span class="n">out_file_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sky_frame</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">out_file_list</span></div>
+
+
+<div class="viewcode-block" id="interpret_infile"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.interpret_infile">[docs]</a><span class="k">def</span> <span class="nf">interpret_infile</span><span class="p">(</span><span class="n">_infile</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Interpret what type of input the user is providing</span>
+<span class="sd">    </span>
+<span class="sd">    _infile will be a list of strings with either one</span>
+<span class="sd">    or two elements</span>
+<span class="sd">    </span>
+<span class="sd">    The output will be file_list, a list containing</span>
+<span class="sd">    2 lists:</span>
+<span class="sd">    file_list[0] will be the object file list</span>
+<span class="sd">    file_list[1] will be the template file list</span>
+<span class="sd">    </span>
+<span class="sd">    Creating a single list, I can fill them both</span>
+<span class="sd">    with a for loop, even if only the object list is</span>
+<span class="sd">    provided.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">file_list</span><span class="o">=</span><span class="p">[[],[]]</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">_infile</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">_infile</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+            <span class="n">file_exist</span><span class="o">=</span><span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file_exist</span><span class="o">=</span><span class="mi">0</span>
+        
+        <span class="k">if</span> <span class="n">file_exist</span><span class="p">:</span>
+            <span class="c1">#single file is provided</span>
+            <span class="k">if</span> <span class="n">_infile</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_sk.img.gz&#39;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_infile</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;_sk.img&#39;</span><span class="p">):</span>
+                <span class="n">file_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_infile</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">_infile</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">as</span> <span class="n">inp</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">inp</span><span class="p">:</span>
+                        <span class="n">ff</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">ff</span><span class="p">):</span>
+                            <span class="n">file_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">list_from_obsid</span> <span class="o">=</span> <span class="n">load_obsid</span><span class="p">(</span><span class="n">ff</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">list_from_obsid</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                                <span class="nb">print</span><span class="p">(</span><span class="n">ff</span><span class="o">+</span><span class="s1">&#39; not found. Skipped.&#39;</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">file_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">file_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">list_from_obsid</span>
+                
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">file_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="n">SwiftPhotom</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">ListError</span><span class="p">(</span><span class="n">_infile</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="c1">#If no file exists, maybe an ObsID was provided.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">file_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">load_obsid</span><span class="p">(</span><span class="n">_infile</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            
+            <span class="c1">#If we reached this point there is a problem with</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">file_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SwiftPhotom</span><span class="o">.</span><span class="n">errors</span><span class="o">.</span><span class="n">FileNotFound</span>
+
+    <span class="k">return</span> <span class="n">file_list</span></div>
+
+<div class="viewcode-block" id="get_aperture_size"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.get_aperture_size">[docs]</a><span class="k">def</span> <span class="nf">get_aperture_size</span><span class="p">(</span><span class="n">_reg</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Retrieve the aperture size from the region file.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">_reg</span><span class="p">)</span> <span class="k">as</span> <span class="n">inp</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">inp</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;#&#39;</span><span class="p">:</span><span class="k">continue</span>
+            <span class="n">size</span><span class="o">=</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    
+    <span class="n">size</span> <span class="o">=</span> <span class="n">size</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">)</span>
+    
+    <span class="c1">#Very brutal way to check if the size is an int</span>
+    <span class="k">if</span> <span class="n">size</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;.&#39;</span><span class="p">:</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">size</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    
+    <span class="k">return</span> <span class="n">size</span></div>
+
+<div class="viewcode-block" id="check_aspect_correction"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.check_aspect_correction">[docs]</a><span class="k">def</span> <span class="nf">check_aspect_correction</span><span class="p">(</span><span class="n">_infile</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Simply check if the &#39;ASPCORR&#39; label in the header</span>
+<span class="sd">    of each extension is equal to &#39;DIRECT&#39;. If it isn&#39;t,</span>
+<span class="sd">    it prints out a WARNING, notifying that astrometry</span>
+<span class="sd">    could be off.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">hdu</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">_infile</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hdu</span><span class="p">)):</span>
+        <span class="k">if</span> <span class="n">hdu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="s1">&#39;PRIMARY&#39;</span><span class="p">:</span> <span class="k">continue</span>
+        <span class="c1">#print(hdu[i].header[&#39;FRAMTIME&#39;])</span>
+        <span class="k">if</span> <span class="n">hdu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;ASPCORR&#39;</span><span class="p">]</span> <span class="o">!=</span><span class="s1">&#39;DIRECT&#39;</span><span class="p">:</span>
+            <span class="n">ext</span> <span class="o">=</span> <span class="n">hdu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;EXTNAME&#39;</span><span class="p">]</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING - Extension &#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span> <span class="s1">&#39; &#39;</span><span class="o">+</span><span class="n">ext</span><span class="o">+</span><span class="s1">&#39; of &#39;</span><span class="o">+</span><span class="n">_infile</span><span class="o">+</span><span class="s1">&#39; has not been aspect corrected. You should check the astrometry.&#39;</span><span class="p">)</span>
+    <span class="n">hdu</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">del</span> <span class="n">hdu</span></div>
+
+<div class="viewcode-block" id="sort_file_list"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.sort_file_list">[docs]</a><span class="k">def</span> <span class="nf">sort_file_list</span><span class="p">(</span><span class="n">_flist</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Organize the file list into a dictionary</span>
+<span class="sd">    sorted by filter</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">out_file_list</span><span class="o">=</span><span class="p">{}</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">_flist</span><span class="p">:</span>
+        <span class="nb">filter</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">getheader</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="s1">&#39;FILTER&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">filter</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">out_file_list</span><span class="p">:</span>
+            <span class="n">out_file_list</span><span class="p">[</span><span class="nb">filter</span><span class="p">]</span><span class="o">=</span><span class="p">[]</span>
+        <span class="n">out_file_list</span><span class="p">[</span><span class="nb">filter</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out_file_list</span></div>
+
+<div class="viewcode-block" id="combine"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.combine">[docs]</a><span class="k">def</span> <span class="nf">combine</span><span class="p">(</span><span class="n">_list</span><span class="p">,</span><span class="n">_outfile</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Combines images with fappend</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">img</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">_list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">fcopy</span><span class="p">(</span><span class="n">img</span><span class="p">,</span><span class="n">_outfile</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">fappend</span><span class="p">(</span><span class="n">img</span><span class="p">,</span><span class="n">_outfile</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="create_product"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.create_product">[docs]</a><span class="k">def</span> <span class="nf">create_product</span><span class="p">(</span><span class="n">_flist</span><span class="p">,</span><span class="n">_filter</span><span class="p">,</span><span class="n">template</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">no_combine</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    If a file has multiple extensions, these are</span>
+<span class="sd">    first combined into a single image. If the</span>
+<span class="sd">    FRAMTIMEs are different, than no merging is</span>
+<span class="sd">    not possible. The merging is carried out by</span>
+<span class="sd">    uvotimsum, and the combined images are saved</span>
+<span class="sd">    in the &#39;mid-products&#39; folder, created for each</span>
+<span class="sd">    filer inside the &#39;reduction&#39; directory.</span>
+<span class="sd">    </span>
+<span class="sd">    If the user prefer to extract every extension</span>
+<span class="sd">    separately, they can use the --no_combine flag.</span>
+<span class="sd">    </span>
+<span class="sd">    All the files are then appended to a single</span>
+<span class="sd">    &#39;product file&#39;, which end up containing all</span>
+<span class="sd">    extensions of all images.</span>
+<span class="sd">    </span>
+<span class="sd">    During this step, the aspect correction for each</span>
+<span class="sd">    file is also checked.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+    <span class="n">out_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="n">_filter</span><span class="p">,</span><span class="s1">&#39;mid-products&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">out_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">out_dir</span><span class="p">)</span>
+    
+    <span class="n">fig_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="n">_filter</span><span class="p">,</span><span class="s1">&#39;figures&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">fig_dir</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">fig_dir</span><span class="p">)</span>
+
+    <span class="n">prod_list</span><span class="o">=</span><span class="p">[]</span>
+    <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">_flist</span><span class="p">:</span>
+        <span class="n">check_aspect_correction</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        
+        <span class="n">hdu</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">no_combine</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hdu</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">hdu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="s1">&#39;PRIMARY&#39;</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="n">prod_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="o">+</span><span class="s1">&#39;[&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;]&#39;</span><span class="p">)</span>
+            <span class="k">continue</span>
+        
+        <span class="n">obsID</span><span class="o">=</span><span class="n">hdu</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;OBS_ID&#39;</span><span class="p">]</span>
+        <span class="n">out_file</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span><span class="n">obsID</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">_filter</span><span class="o">+</span><span class="s1">&#39;.fits&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">out_file</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
+        
+        <span class="n">framtime</span><span class="o">=</span><span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hdu</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">hdu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="s1">&#39;PRIMARY&#39;</span><span class="p">:</span> <span class="k">continue</span>
+            <span class="n">framtime</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">hdu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">header</span><span class="p">[</span><span class="s1">&#39;FRAMTIME&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">framtime</span><span class="p">))</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">sc</span><span class="o">.</span><span class="n">uvotimsum</span><span class="p">(</span><span class="n">file</span><span class="p">,</span><span class="n">out_file</span><span class="p">,</span><span class="n">_exclude</span><span class="o">=</span><span class="s1">&#39;none&#39;</span><span class="p">)</span>
+            <span class="n">prod_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out_file</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;WARNING - extensions of &#39;</span><span class="o">+</span><span class="n">file</span><span class="o">+</span><span class="s1">&#39; have different FRAMTIMEs. Left unmerged.&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">hdu</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="n">hdu</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="o">==</span><span class="s1">&#39;PRIMARY&#39;</span><span class="p">:</span> <span class="k">continue</span>
+                <span class="n">prod_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="o">+</span><span class="s1">&#39;[&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;]&#39;</span><span class="p">)</span>
+        <span class="n">hdu</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">del</span> <span class="n">hdu</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">template</span><span class="p">:</span>
+        <span class="n">prod_out_file</span><span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="n">_filter</span><span class="p">,</span><span class="n">pf</span><span class="o">.</span><span class="n">getheader</span><span class="p">(</span><span class="n">file</span><span class="p">)[</span><span class="s1">&#39;OBJECT&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_&#39;</span><span class="o">+</span><span class="n">_filter</span><span class="o">+</span><span class="s1">&#39;.img&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">prod_out_file</span><span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="n">_filter</span><span class="p">,</span><span class="s1">&#39;templ_&#39;</span><span class="o">+</span><span class="n">_filter</span><span class="o">+</span><span class="s1">&#39;.img&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">prod_out_file</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">prod_out_file</span><span class="p">)</span>
+
+    <span class="n">combine</span><span class="p">(</span><span class="n">prod_list</span><span class="p">,</span><span class="n">prod_out_file</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">prod_out_file</span></div>
+
+<div class="viewcode-block" id="run_uvotmaghist"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.run_uvotmaghist">[docs]</a><span class="k">def</span> <span class="nf">run_uvotmaghist</span><span class="p">(</span><span class="n">_prod_file</span><span class="p">,</span><span class="n">_sn_reg</span><span class="p">,</span><span class="n">_bg_reg</span><span class="p">,</span><span class="n">_filter</span><span class="p">):</span>
+    <span class="n">fig_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="n">_filter</span><span class="p">,</span><span class="s1">&#39;figures&#39;</span><span class="p">)</span>
+    <span class="n">photo_out</span><span class="o">=</span><span class="n">_prod_file</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_phot.fits&#39;</span>
+    <span class="n">gif_out</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fig_dir</span><span class="p">,</span><span class="n">_prod_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_phot.gif&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">photo_out</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">photo_out</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">gif_out</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">gif_out</span><span class="p">)</span>
+    <span class="n">sc</span><span class="o">.</span><span class="n">uvotmaghist</span><span class="p">(</span><span class="n">_prod_file</span><span class="p">,</span><span class="n">_sn_reg</span><span class="p">,</span><span class="n">_bg_reg</span><span class="p">,</span> <span class="n">photo_out</span><span class="p">,</span><span class="n">gif_out</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">photo_out</span></div>
+
+<div class="viewcode-block" id="extract_photometry"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.extract_photometry">[docs]</a><span class="k">def</span> <span class="nf">extract_photometry</span><span class="p">(</span><span class="n">_phot_file</span><span class="p">,</span> <span class="n">_ab</span><span class="p">,</span> <span class="n">_det_limit</span><span class="p">,</span> <span class="n">_ap_size</span><span class="p">,</span> <span class="n">_templ_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+
+    <span class="c1">####</span>
+    <span class="c1">#The default aperture of uvotmaghist is 5 arcsec.</span>
+    <span class="c1">#Corrections to retrieve this fluxes are provide.</span>
+    <span class="c1">#We can compare the 2 apertures.</span>
+    <span class="c1">####</span>
+    
+    <span class="k">if</span> <span class="n">_templ_file</span><span class="o">!=</span><span class="kc">None</span><span class="p">:</span>
+        <span class="n">template</span><span class="o">=</span><span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">_ab</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+        <span class="n">Vega_corr</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;V&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;B&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;U&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;UVW1&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;UVM2&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;UVW2&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">}</span>
+        <span class="n">mag_sys</span> <span class="o">=</span> <span class="s1">&#39;AB&#39;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">Vega_corr</span><span class="o">=</span><span class="n">Vega</span>
+        <span class="n">mag_sys</span> <span class="o">=</span> <span class="s1">&#39;Vega&#39;</span>
+
+    <span class="n">user_ap</span> <span class="o">=</span> <span class="n">_ap_size</span><span class="o">+</span><span class="s1">&#39;_arcsec&#39;</span>
+
+    <span class="n">col</span><span class="o">=</span><span class="p">{</span><span class="n">user_ap</span><span class="p">:</span><span class="s1">&#39;b&#39;</span><span class="p">,</span><span class="s1">&#39;5_arcsec&#39;</span><span class="p">:</span><span class="s1">&#39;r&#39;</span><span class="p">}</span>
+    <span class="n">mag</span><span class="o">=</span><span class="p">{</span><span class="n">user_ap</span><span class="p">:[],</span><span class="s1">&#39;5_arcsec&#39;</span><span class="p">:[]}</span>
+
+    <span class="n">BCR_temp</span><span class="o">=</span><span class="p">{}</span>
+    <span class="n">BCRe_temp</span><span class="o">=</span><span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">file</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">([</span><span class="n">_templ_file</span><span class="p">,</span><span class="n">_phot_file</span><span class="p">]):</span>
+        <span class="k">if</span> <span class="n">file</span><span class="o">==</span><span class="kc">None</span><span class="p">:</span>
+            <span class="c1">#In case there is no template, nothing will be subtracted.</span>
+            <span class="n">BCR_temp</span><span class="o">=</span><span class="p">{</span><span class="n">user_ap</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span><span class="s1">&#39;5_arcsec&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">}</span>
+            <span class="n">BCRe_temp</span><span class="o">=</span><span class="p">{</span><span class="n">user_ap</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span><span class="s1">&#39;5_arcsec&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">}</span>
+            <span class="n">template</span><span class="o">=</span><span class="mi">0</span>
+            <span class="k">continue</span>
+    
+        <span class="n">hdu</span><span class="o">=</span><span class="n">pf</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+        <span class="n">dd</span><span class="o">=</span><span class="n">hdu</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+        <span class="nb">filter</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;FILTER&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">hdu</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="c1">#The long-term detector sensitivity correction factor.</span>
+        <span class="n">SC</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;SENSCORR_FACTOR&#39;</span><span class="p">]</span>
+
+        <span class="c1">#This is the count rate for the user defined aperture</span>
+        <span class="n">S3BCR</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_SRC_RATE&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">SC</span>
+        
+        <span class="c1">#adding 3% error on count rate of the source in quadrature to poission error</span>
+        <span class="k">if</span> <span class="n">template</span> <span class="ow">and</span> <span class="n">i</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">S3BCRe</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_SRC_RATE_ERR&#39;</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">S3BCR</span><span class="o">*</span><span class="mf">0.03</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">S3BCRe</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_SRC_RATE_ERR&#39;</span><span class="p">]</span>
+        
+        <span class="c1">#These is the count rate for 5arcsec</span>
+        <span class="n">S5CR</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;RAW_STD_RATE&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_STD_FACTOR&#39;</span><span class="p">]</span>
+        <span class="n">S5CRe</span><span class="o">=</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;RAW_STD_RATE_ERR&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_STD_FACTOR&#39;</span><span class="p">]</span>
+        <span class="n">S5BCR</span><span class="o">=</span><span class="p">((</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;RAW_STD_RATE&#39;</span><span class="p">]</span> <span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_STD_FACTOR&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">SC</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_BKG_RATE&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">SC</span> <span class="o">*</span> <span class="n">dd</span><span class="p">[</span><span class="s1">&#39;STD_AREA&#39;</span><span class="p">]))</span>
+        <span class="k">if</span> <span class="n">template</span> <span class="ow">and</span> <span class="n">i</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+            <span class="n">S5BCRe</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">S5CRe</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">S5CR</span><span class="o">*</span><span class="mf">0.03</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_BKG_RATE_ERR&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;STD_AREA&#39;</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">S5BCRe</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">S5CRe</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_BKG_RATE_ERR&#39;</span><span class="p">]</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;STD_AREA&#39;</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        
+        
+        
+        <span class="n">fig_dir</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="nb">filter</span><span class="p">,</span><span class="s1">&#39;figures&#39;</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax</span><span class="o">=</span><span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">template</span><span class="p">:</span>
+            <span class="n">fig_mag</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+            <span class="n">ax_mag</span><span class="o">=</span><span class="n">fig_mag</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+        
+        <span class="n">fig_sub</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">ax_sub</span><span class="o">=</span><span class="n">fig_sub</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">BCR</span><span class="p">,</span><span class="n">BCRe</span><span class="p">,</span><span class="n">label</span> <span class="ow">in</span> <span class="p">[[</span><span class="n">S3BCR</span><span class="p">,</span><span class="n">S3BCRe</span><span class="p">,</span><span class="n">user_ap</span><span class="p">]</span> <span class="p">,</span> <span class="p">[</span><span class="n">S5BCR</span><span class="p">,</span><span class="n">S5BCRe</span><span class="p">,</span><span class="s1">&#39;5_arcsec&#39;</span><span class="p">]]:</span>
+        
+
+
+
+            <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+                <span class="n">epochs</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">BCR</span><span class="p">))</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span><span class="n">BCR</span><span class="p">,</span><span class="n">yerr</span><span class="o">=</span><span class="n">BCRe</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+            
+                <span class="c1">#weighed avarage the template fluxes</span>
+                <span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">BCR</span><span class="o">/</span><span class="n">BCRe</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">BCRe</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">BCRe_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">BCRe</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+                
+                <span class="n">xx</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">BCR</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xx</span><span class="p">,[</span><span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span> <span class="p">[</span><span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">+</span><span class="n">BCRe_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span>  <span class="p">[</span><span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">-</span><span class="n">BCRe_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+            
+                <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Epoch&#39;</span><span class="p">)</span>
+            
+                <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Galaxy count rates in &#39;</span><span class="o">+</span><span class="n">label</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot; aperture: </span><span class="si">%.3f</span><span class="s1"> +- </span><span class="si">%.3f</span><span class="s1">&#39;</span> <span class="o">%</span><span class="p">(</span><span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">BCRe_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]))</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">all_point</span><span class="o">=</span><span class="p">[]</span>
+                <span class="n">mjd</span><span class="o">=</span><span class="n">mjdref</span><span class="o">+</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;TSTART&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;TSTOP&#39;</span><span class="p">])</span><span class="o">/</span><span class="mf">2.</span><span class="o">/</span><span class="mf">86400.</span>
+                <span class="n">ax</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">mjd</span><span class="p">,</span><span class="n">BCR</span><span class="p">,</span><span class="n">yerr</span><span class="o">=</span><span class="n">BCRe</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+                
+                <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;MJD&#39;</span><span class="p">)</span>
+                
+                
+                <span class="c1">#subtract galaxy, propogate error</span>
+                <span class="n">BCGR</span><span class="o">=</span><span class="p">(</span><span class="n">BCR</span><span class="o">-</span><span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+                <span class="n">BCGRe</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">((</span><span class="n">BCRe</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">BCRe_temp</span><span class="p">[</span><span class="n">label</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">label</span><span class="o">==</span><span class="n">user_ap</span><span class="p">:</span>
+                    <span class="c1"># apply aperture correction</span>
+                    <span class="n">BCGAR</span><span class="o">=</span><span class="n">BCGR</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;AP_FACTOR&#39;</span><span class="p">]</span>
+                    <span class="n">BCGARe</span><span class="o">=</span><span class="n">BCGRe</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;AP_FACTOR_ERR&#39;</span><span class="p">]</span>
+                    <span class="n">BCAR</span><span class="o">=</span><span class="n">BCR</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;AP_FACTOR&#39;</span><span class="p">]</span>
+                    <span class="n">BCARe</span><span class="o">=</span><span class="n">BCRe</span><span class="o">*</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;AP_FACTOR_ERR&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">BCGAR</span><span class="o">=</span><span class="n">BCGR</span>
+                    <span class="n">BCGARe</span><span class="o">=</span><span class="n">BCGRe</span>
+                    <span class="n">BCAR</span><span class="o">=</span><span class="n">BCR</span>
+                    <span class="n">BCARe</span><span class="o">=</span><span class="n">BCRe</span>
+                
+                <span class="k">if</span> <span class="n">template</span><span class="p">:</span>
+                    <span class="c1">#Not subtracted magnitudes</span>
+                    <span class="n">or_mag</span><span class="o">=-</span><span class="mf">2.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">BCAR</span><span class="p">)</span><span class="o">+</span><span class="n">ZP</span><span class="p">[</span><span class="nb">filter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">Vega_corr</span><span class="p">[</span><span class="nb">filter</span><span class="p">]</span>
+                    <span class="n">or_mage</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="mf">2.5</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10.</span><span class="p">))</span><span class="o">*</span><span class="p">((</span><span class="n">BCRe</span><span class="o">/</span><span class="n">BCAR</span><span class="p">)))</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">ZP</span><span class="p">[</span><span class="nb">filter</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                
+                    <span class="n">mag_host</span><span class="o">=-</span><span class="mf">2.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">])</span><span class="o">+</span><span class="n">ZP</span><span class="p">[</span><span class="nb">filter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">Vega_corr</span><span class="p">[</span><span class="nb">filter</span><span class="p">]</span>
+                    <span class="n">mag_hoste</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="mf">2.5</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10.</span><span class="p">))</span><span class="o">*</span><span class="p">((</span><span class="n">BCRe_temp</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">/</span><span class="n">BCR_temp</span><span class="p">[</span><span class="n">label</span><span class="p">])))</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">ZP</span><span class="p">[</span><span class="nb">filter</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                
+                    <span class="n">ax_mag</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">mjd</span><span class="p">,</span><span class="n">or_mag</span><span class="p">,</span><span class="n">yerr</span><span class="o">=</span><span class="n">or_mage</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span>
+
+                    <span class="n">ax_mag</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="nb">min</span><span class="p">(</span><span class="n">mjd</span><span class="p">),</span><span class="nb">max</span><span class="p">(</span><span class="n">mjd</span><span class="p">)],[</span><span class="n">mag_host</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+                    <span class="n">ax_mag</span><span class="o">.</span><span class="n">fill_between</span><span class="p">([</span><span class="nb">min</span><span class="p">(</span><span class="n">mjd</span><span class="p">),</span><span class="nb">max</span><span class="p">(</span><span class="n">mjd</span><span class="p">)],</span> <span class="p">[</span><span class="n">mag_host</span><span class="o">+</span><span class="n">mag_hoste</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span>  <span class="p">[</span><span class="n">mag_host</span><span class="o">-</span><span class="n">mag_hoste</span><span class="p">]</span><span class="o">*</span><span class="mi">2</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">lw</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+                
+            
+
+
+
+                <span class="c1"># determine significance/3 sigma upper limit</span>
+                <span class="n">BCGARs</span><span class="o">=</span><span class="n">BCGAR</span><span class="o">/</span><span class="n">BCGARe</span>
+                <span class="n">BCGAMl</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">2.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mf">3.</span><span class="o">*</span><span class="n">BCGARe</span><span class="p">))</span><span class="o">+</span><span class="n">ZP</span><span class="p">[</span><span class="nb">filter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">Vega_corr</span><span class="p">[</span><span class="nb">filter</span><span class="p">]</span>
+
+                <span class="c1">#convert rate,err to magnitudes&quot;</span>
+                <span class="k">for</span> <span class="n">j</span><span class="p">,</span><span class="n">CR</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">BCGARs</span><span class="p">):</span>
+                    <span class="n">mag</span><span class="p">[</span><span class="n">label</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s1">&#39;filter&#39;</span><span class="p">:</span><span class="nb">filter</span><span class="p">,</span>
+                    <span class="s1">&#39;aperture_correction&#39;</span><span class="p">:</span><span class="nb">float</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;AP_FACTOR&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]),</span>
+                    <span class="s1">&#39;coincidence_loss_correction&#39;</span><span class="p">:</span><span class="nb">float</span><span class="p">(</span><span class="n">dd</span><span class="p">[</span><span class="s1">&#39;COI_STD_FACTOR&#39;</span><span class="p">][</span><span class="n">j</span><span class="p">]),</span>
+                    <span class="s1">&#39;mag_sys&#39;</span><span class="p">:</span><span class="n">mag_sys</span><span class="p">,</span>
+                    <span class="s1">&#39;mag_limit&#39;</span><span class="p">:</span><span class="nb">float</span><span class="p">(</span><span class="n">BCGAMl</span><span class="p">[</span><span class="n">j</span><span class="p">]),</span>
+                    <span class="s1">&#39;template_subtracted&#39;</span><span class="p">:</span><span class="nb">bool</span><span class="p">(</span><span class="n">template</span><span class="p">),</span>
+                    <span class="s1">&#39;mjd&#39;</span><span class="p">:</span><span class="nb">float</span><span class="p">(</span><span class="n">mjd</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                    <span class="p">})</span>
+                    
+                    <span class="c1">#detection</span>
+                    <span class="k">if</span> <span class="n">BCGARs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">&gt;=</span><span class="n">_det_limit</span><span class="p">:</span>
+                        <span class="n">BCGAM</span><span class="o">=-</span><span class="mf">2.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">BCGAR</span><span class="p">[</span><span class="n">j</span><span class="p">])</span><span class="o">+</span><span class="n">ZP</span><span class="p">[</span><span class="nb">filter</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">Vega_corr</span><span class="p">[</span><span class="nb">filter</span><span class="p">]</span>
+                        <span class="n">BCGAMe</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(((</span><span class="mf">2.5</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10.</span><span class="p">))</span><span class="o">*</span><span class="p">((</span><span class="n">BCGARe</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">/</span><span class="n">BCGAR</span><span class="p">[</span><span class="n">j</span><span class="p">])))</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">ZP</span><span class="p">[</span><span class="nb">filter</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+                    
+                        <span class="n">mag</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;upper_limit&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">False</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.2f</span><span class="se">\t</span><span class="si">%.3f</span><span class="se">\t</span><span class="si">%.3f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mjd</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="n">BCGAM</span><span class="p">,</span><span class="n">BCGAMe</span><span class="p">))</span>
+                    <span class="c1">#non detection</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">BCGAM</span><span class="o">=</span><span class="n">BCGAMl</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                        <span class="n">BCGAMe</span><span class="o">=</span><span class="mf">0.2</span>
+                        
+                        <span class="n">mag</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;upper_limit&#39;</span><span class="p">]</span><span class="o">=</span><span class="kc">True</span>
+                        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%.2f</span><span class="se">\t</span><span class="s1">&gt; </span><span class="si">%.3f</span><span class="s1"> (</span><span class="si">%.2f</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">mjd</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="n">BCGAM</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">fabs</span><span class="p">(</span><span class="n">BCGARs</span><span class="p">[</span><span class="n">j</span><span class="p">])))</span>
+                    
+                    <span class="n">mag</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;mag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">BCGAM</span><span class="p">)</span>
+                    <span class="n">mag</span><span class="p">[</span><span class="n">label</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;mag_err&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">BCGAMe</span><span class="p">)</span>
+                    <span class="n">all_point</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">mjd</span><span class="p">[</span><span class="n">j</span><span class="p">],</span><span class="n">BCGAM</span><span class="p">])</span>
+ 
+                <span class="n">detections</span> <span class="o">=</span> <span class="p">[[</span><span class="n">ep</span><span class="p">[</span><span class="s1">&#39;mjd&#39;</span><span class="p">],</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">],</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;mag_err&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">mag</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;upper_limit&#39;</span><span class="p">]]</span>
+                <span class="n">non_detections</span> <span class="o">=</span> <span class="p">[[</span><span class="n">ep</span><span class="p">[</span><span class="s1">&#39;mjd&#39;</span><span class="p">],</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;mag&#39;</span><span class="p">],</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;mag_err&#39;</span><span class="p">]]</span> <span class="k">for</span> <span class="n">ep</span> <span class="ow">in</span> <span class="n">mag</span><span class="p">[</span><span class="n">label</span><span class="p">]</span> <span class="k">if</span> <span class="n">ep</span><span class="p">[</span><span class="s1">&#39;upper_limit&#39;</span><span class="p">]]</span>
+                
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">xx</span><span class="p">,</span><span class="n">yy</span><span class="p">,</span><span class="n">ee</span><span class="o">=</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">(</span><span class="n">detections</span><span class="p">))</span>
+                    <span class="n">ax_sub</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span><span class="n">yy</span><span class="p">,</span><span class="n">yerr</span><span class="o">=</span><span class="n">ee</span><span class="p">,</span><span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span><span class="n">ls</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+                
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">non_detections</span><span class="p">)</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">:</span>
+                    <span class="n">xx</span><span class="p">,</span><span class="n">yy</span><span class="p">,</span><span class="n">ee</span><span class="o">=</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">(</span><span class="n">non_detections</span><span class="p">))</span>
+                    <span class="n">ax_sub</span><span class="o">.</span><span class="n">errorbar</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span><span class="n">yy</span><span class="p">,</span> <span class="n">yerr</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">1.</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">ee</span><span class="p">),[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="nb">len</span><span class="p">(</span><span class="n">ee</span><span class="p">)],</span> <span class="n">uplims</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">],</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span><span class="n">ls</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+                
+                <span class="c1">#since I&#39;m plotting detections and non detections separately</span>
+                <span class="c1">#this is done only to have a line connecting all epochs</span>
+                <span class="n">xx</span><span class="p">,</span><span class="n">yy</span><span class="o">=</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_point</span><span class="p">))</span>
+                <span class="n">ax_sub</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xx</span><span class="p">,</span><span class="n">yy</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">[</span><span class="n">label</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="n">label</span><span class="o">==</span><span class="n">user_ap</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">+</span><span class="n">_ap_size</span><span class="o">+</span><span class="s1">&#39;&quot; aperture done!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">5&quot; aperture done!</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="n">i</span><span class="o">==</span><span class="mi">1</span><span class="p">:</span>
+        
+            <span class="n">ax_sub</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ax_sub</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;MJD&#39;</span><span class="p">)</span>
+            <span class="n">ax_sub</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Mag&#39;</span><span class="p">)</span>
+            <span class="n">ax_sub</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+            <span class="n">ax_sub</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+            
+            
+            <span class="n">out_fig</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fig_dir</span><span class="p">,</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_mag_final.png&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">out_fig</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">out_fig</span><span class="p">)</span>
+
+            <span class="n">fig_sub</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">out_fig</span><span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig_sub</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">fig_sub</span>
+            <span class="k">del</span> <span class="n">ax_sub</span>
+            
+            
+            <span class="k">if</span> <span class="n">template</span><span class="p">:</span>
+                <span class="n">ax_mag</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">ax_mag</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;MJD&#39;</span><span class="p">)</span>
+                <span class="n">ax_mag</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Mag&#39;</span><span class="p">)</span>
+                <span class="n">ax_mag</span><span class="o">.</span><span class="n">invert_yaxis</span><span class="p">()</span>
+                <span class="n">ax_mag</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+
+
+                <span class="n">out_fig</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fig_dir</span><span class="p">,</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_mag.png&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">out_fig</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">out_fig</span><span class="p">)</span>
+
+                <span class="n">fig_mag</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">out_fig</span><span class="p">)</span>
+                <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig_mag</span><span class="p">)</span>
+                <span class="k">del</span> <span class="n">fig_mag</span>
+                <span class="k">del</span> <span class="n">ax_mag</span>
+
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Coincident-corrected count rates&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+        
+        
+
+        <span class="n">out_fig</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fig_dir</span><span class="p">,</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="o">-</span><span class="mi">5</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;_counts.png&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">out_fig</span><span class="p">):</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">out_fig</span><span class="p">)</span>
+
+        <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">out_fig</span><span class="p">)</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">fig</span>
+        <span class="k">del</span> <span class="n">ax</span>
+        
+
+
+    <span class="k">return</span> <span class="n">mag</span></div>
+
+<div class="viewcode-block" id="output_mags"><a class="viewcode-back" href="../../api/SwiftPhotom.uvot.html#SwiftPhotom.uvot.output_mags">[docs]</a><span class="k">def</span> <span class="nf">output_mags</span><span class="p">(</span><span class="n">_mag</span><span class="p">,</span><span class="n">_ap_size</span><span class="p">):</span>
+    <span class="n">user_ap</span> <span class="o">=</span> <span class="n">_ap_size</span><span class="o">+</span><span class="s1">&#39;_arcsec&#39;</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="n">_ap_size</span><span class="o">+</span><span class="s1">&#39;_arcsec_photometry.json&#39;</span><span class="p">),</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">_mag</span><span class="p">[</span><span class="n">user_ap</span><span class="p">],</span> <span class="n">indent</span> <span class="o">=</span> <span class="mi">4</span><span class="p">))</span>
+    
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;reduction&#39;</span><span class="p">,</span><span class="s1">&#39;5_arcsec_photometry.json&#39;</span><span class="p">),</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out</span><span class="p">:</span>
+        <span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">_mag</span><span class="p">[</span><span class="s1">&#39;5_arcsec&#39;</span><span class="p">],</span> <span class="n">indent</span> <span class="o">=</span> <span class="mi">4</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Giacomo Terreran.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
