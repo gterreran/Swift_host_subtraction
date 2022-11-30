@@ -15,7 +15,7 @@ The easiest method to install SwiftPhotom is using `pip <https://pip.pypa.io/en/
 
    $ pip install git+https://github.com/gterreran/Swift_host_subtraction.git
 
-After cloning this repository, from the main folder simply run
+Alternatively, after cloning this repository, from the main folder simply run
 
 .. code-block:: bash
 

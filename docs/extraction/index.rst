@@ -24,3 +24,14 @@ First extraction
 ====================
 Template subtraction
 ====================
+
+	#RAW_TOT_RATE -> Rate from the radius in sn.reg
+	#RAW_STD_RATE -> Rate from 5" radius
+	#COI_STD_FACTOR -> coincidence loss factor corrected for the aperture in sn.reg
+	#COI_TOT_RATE = COI_STD_FACTOR * RAW_TOT_RATE -> total rate coincidence-loss-corrected
+	#COI_SRC_RATE = COI_TOT_RATE-COI_BKG_RATE*SRC_AREA -> only source, background-subtracted
+
+	#AP_COI_SRC_RATE = COI_SRC_RATE * AP_FACTOR
+	#LSS_RATE = AP_COI_SRC_RATE / LSS_FACTOR -> large scale sensitivity
+	#When photometry is done on coadded images the correction is not done, and a systematic uncertainty of 2.3% of the count rate is added in quadrature to the photometric error
+	#SENSCORR_RATE = LSS_RATE * SENSCORR_FACTOR -> long-term sensitivity lost of the sensor

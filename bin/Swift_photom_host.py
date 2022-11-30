@@ -22,6 +22,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ap_size = up.get_aperture_size(args.sn_reg)
+    user_ap = ap_size+'_arcsec'
 
     #check_heasoft()
 
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     
     os.mkdir('reduction')
 
-    mag={'user_ap':[], '5_arcsec':[]}
+    mag={user_ap:[], '5_arcsec':[]}
 
     filt_list=up.sort_filters(args.filter)
 

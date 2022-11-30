@@ -121,13 +121,19 @@ def interpret_infile(_infile):
 
 def get_aperture_size(_reg):
     '''
-    Retrieve the aperture siza from the region file.
+    Retrieve the aperture size from the region file.
     '''
     with open(_reg) as inp:
         for line in inp:
             if line[0]=='#':continue
             size=line.strip('\n').split(',')[-1][:-2]
-
+    
+    size = size.rstrip('0')
+    
+    #Very brutal way to check if the size is an int
+    if size[-1]=='.':
+        size = size[:-1]
+    
     return size
 
 def check_aspect_correction(_infile):
@@ -277,8 +283,10 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
         Vega_corr=Vega
         mag_sys = 'Vega'
 
-    col={'user_ap':'b','5_arcsec':'r'}
-    mag={'user_ap':[],'5_arcsec':[]}
+    user_ap = _ap_size+'_arcsec'
+
+    col={user_ap:'b','5_arcsec':'r'}
+    mag={user_ap:[],'5_arcsec':[]}
 
     BCR_temp={}
     BCRe_temp={}
@@ -286,8 +294,8 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
     for i,file in enumerate([_templ_file,_phot_file]):
         if file==None:
             #In case there is no template, nothing will be subtracted.
-            BCR_temp={'user_ap':0.,'5_arcsec':0.}
-            BCRe_temp={'user_ap':0.,'5_arcsec':0.}
+            BCR_temp={user_ap:0.,'5_arcsec':0.}
+            BCRe_temp={user_ap:0.,'5_arcsec':0.}
             template=0
             continue
     
@@ -330,7 +338,7 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
         fig_sub=plt.figure()
         ax_sub=fig_sub.add_subplot(111)
 
-        for BCR,BCRe,label in [[S3BCR,S3BCRe,'user_ap'] , [S5BCR,S5BCRe,'5_arcsec']]:
+        for BCR,BCRe,label in [[S3BCR,S3BCRe,user_ap] , [S5BCR,S5BCRe,'5_arcsec']]:
         
 
 
@@ -349,7 +357,7 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
             
                 ax.set_xlabel('Epoch')
             
-                print('Galaxy count rates in '+label[0]+'"aperture: %.3f +- %.3f' %(BCR_temp[label],BCRe_temp[label]))
+                print('Galaxy count rates in '+label.split('_')[0]+'" aperture: %.3f +- %.3f' %(BCR_temp[label],BCRe_temp[label]))
 
             else:
                 all_point=[]
@@ -363,7 +371,7 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
                 BCGR=(BCR-BCR_temp[label])
                 BCGRe=np.sqrt((BCRe)**2+(BCRe_temp[label])**2)
 
-                if label=='user_ap':
+                if label==user_ap:
                     # apply aperture correction
                     BCGAR=BCGR*dd['AP_FACTOR']
                     BCGARe=BCGRe*dd['AP_FACTOR_ERR']
@@ -445,7 +453,7 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
                 xx,yy=zip(*sorted(all_point))
                 ax_sub.plot(xx,yy, color=col[label])
 
-                if label=='user_ap':
+                if label==user_ap:
                     print('\n'+_ap_size+'" aperture done!\n')
                 else:
                     print('\n5" aperture done!\n')
@@ -464,6 +472,7 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
                 os.remove(out_fig)
 
             fig_sub.savefig(out_fig)
+            plt.close(fig_sub)
             del fig_sub
             del ax_sub
             
@@ -481,6 +490,7 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
                     os.remove(out_fig)
 
                 fig_mag.savefig(out_fig)
+                plt.close(fig_mag)
                 del fig_mag
                 del ax_mag
 
@@ -495,7 +505,7 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
             os.remove(out_fig)
 
         fig.savefig(out_fig)
-        plt.close()
+        plt.close(fig)
         del fig
         del ax
         
@@ -504,8 +514,9 @@ def extract_photometry(_phot_file, _ab, _det_limit, _ap_size, _templ_file=None):
     return mag
 
 def output_mags(_mag,_ap_size):
+    user_ap = _ap_size+'_arcsec'
     with open(os.path.join('reduction',_ap_size+'_arcsec_photometry.json'),'w') as out:
-        out.write(json.dumps(_mag['user_ap'], indent = 4))
+        out.write(json.dumps(_mag[user_ap], indent = 4))
     
     with open(os.path.join('reduction','5_arcsec_photometry.json'),'w') as out:
         out.write(json.dumps(_mag['5_arcsec'], indent = 4))
